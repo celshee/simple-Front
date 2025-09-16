@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD with Express API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        input, button { padding: 6px; margin: 5px; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 8px 0; }
+        .item { display: flex; align-items: center; }
+        .item span { flex: 1; }
+        .btn { margin-left: 5px; }
+    </style>
+</head>
+<body>
+<h1>Item Manager</h1>
+
+<input type="text" id="newItem" placeholder="Enter item name">
+<button onclick="addItem()">Add Item</button>
+
+<h2>Items</h2>
+<ul id="itemsList"></ul>
+
+<script>
+    const API_URL = "http://localhost:5000/items";
+
+
+    async function loadItems() {
+        const res = await fetch(API_URL);
+        const items = await res.json();
+        const list = document.getElementById("itemsList");
+        list.innerHTML = "";
+        items.forEach(item => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+          <div class="item">
+            <span>${item.name}</span>
+            <button class="btn" onclick="updateItem(${item.id})">Update</button>
+            <button class="btn" onclick="deleteItem(${item.id})">Delete</button>
+          </div>`;
+            list.appendChild(li);
+        });
+    }
+
+
+    async function addItem() {
+        const input = document.getElementById("newItem");
+        const name = input.value.trim();
+        if (!name) return alert("Please enter a name");
+
+        await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name })
+        });
+        input.value = "";
+        loadItems();
+    }
+
+
+    async function updateItem(id) {
+        const newName = prompt("Enter new name:");
+        if (!newName) return;
+
+        await fetch(`${API_URL}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: newName })
+        });
+        loadItems();
+    }
+
+
+    async function deleteItem(id) {
+        await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        loadItems();
+    }
+
+    loadItems();
+</script>
+</body>
+</html>
