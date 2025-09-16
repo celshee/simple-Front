@@ -1,84 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>CRUD with Express API</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        input, button { padding: 6px; margin: 5px; }
-        ul { list-style: none; padding: 0; }
-        li { margin: 8px 0; }
-        .item { display: flex; align-items: center; }
-        .item span { flex: 1; }
-        .btn { margin-left: 5px; }
-    </style>
-</head>
-<body>
+import React, { useState, useEffect } from "react";
+
+const API_URL = "http://localhost:5000/items"; // Replace with your server IP if deployed
+
+function App() {
+const [items, setItems] = useState([]);
+const [newItem, setNewItem] = useState("");
+
+// Load all items
+const loadItems = async () => {
+try {
+const res = await fetch(API_URL);
+const data = await res.json();
+setItems(data);
+} catch (err) {
+console.error("Error loading items:", err);
+}
+};
+
+useEffect(() => {
+loadItems();
+}, []);
+
+// Add item
+const addItem = async () => {
+if (!newItem.trim()) return alert("Please enter a name");
+
+await fetch(API_URL, {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ name: newItem }),
+});
+
+setNewItem("");
+loadItems();
+};
+
+// Update item
+const updateItem = async (id) => {
+const newName = prompt("Enter new name:");
+if (!newName) return;
+
+await fetch(`${API_URL}/${id}`, {
+method: "PUT",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ name: newName }),
+});
+loadItems();
+};
+
+// Delete item
+const deleteItem = async (id) => {
+await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+loadItems();
+};
+
+return (
+<div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
 <h1>Item Manager</h1>
 
-<input type="text" id="newItem" placeholder="Enter item name">
-<button onclick="addItem()">Add Item</button>
+<input
+        type="text"
+        value={newItem}
+        onChange={(e) => setNewItem(e.target.value)}
+placeholder="Enter item name"
+style={{ padding: "6px", marginRight: "5px" }}
+/>
+<button onClick={addItem} style={{ padding: "6px" }}>
+Add Item
+</button>
 
 <h2>Items</h2>
-<ul id="itemsList"></ul>
+<ul style={{ listStyle: "none", padding: 0 }}>
+{items.map((item) => (
+<li key={item.id} style={{ marginBottom: "8px" }}>
+<div style={{ display: "flex", alignItems: "center" }}>
+<span style={{ flex: 1 }}>{item.name}</span>
+<button onClick={() => updateItem(item.id)} style={{ marginLeft: "5px" }}>
+Update
+</button>
+<button onClick={() => deleteItem(item.id)} style={{ marginLeft: "5px" }}>
+Delete
+</button>
+</div>
+</li>
+))}
+</ul>
+</div>
+);
+}
 
-<script>
-    const API_URL = "http://localhost:5000/items";
-
-
-    async function loadItems() {
-        const res = await fetch(API_URL);
-        const items = await res.json();
-        const list = document.getElementById("itemsList");
-        list.innerHTML = "";
-        items.forEach(item => {
-            const li = document.createElement("li");
-            li.innerHTML = `
-          <div class="item">
-            <span>${item.name}</span>
-            <button class="btn" onclick="updateItem(${item.id})">Update</button>
-            <button class="btn" onclick="deleteItem(${item.id})">Delete</button>
-          </div>`;
-            list.appendChild(li);
-        });
-    }
-
-
-    async function addItem() {
-        const input = document.getElementById("newItem");
-        const name = input.value.trim();
-        if (!name) return alert("Please enter a name");
-
-        await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name })
-        });
-        input.value = "";
-        loadItems();
-    }
-
-
-    async function updateItem(id) {
-        const newName = prompt("Enter new name:");
-        if (!newName) return;
-
-        await fetch(`${API_URL}/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: newName })
-        });
-        loadItems();
-    }
-
-
-    async function deleteItem(id) {
-        await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-        loadItems();
-    }
-
-    loadItems();
-</script>
-</body>
-</html>
+export default App;
